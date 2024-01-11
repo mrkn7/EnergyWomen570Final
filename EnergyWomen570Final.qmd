@@ -1,0 +1,532 @@
+---
+title: "Women's Leadership and Carbon Disclosure by The Global Energy Companies"
+author: "Ekinsu Çiçek ekinsu.cicek@metu.edu.tr - Kübra Nur Akdemir - kubra.akdemir@metu.edu.tr , Oğuzhan Aydın - aydin.oguzhan_01@metu.edu.tr, Mehmet Ali Erkan - erkan.ali@metu.edu.tr"
+format: 
+  html:
+    embed-resources: true
+    toc: true
+editor: visual
+---
+
+::: callout-note
+This document is a product of the final project for the STAT 570 lecture, focusing on data handling and visualization tools. It is essential to acknowledge that minor errors may be present, and the methods employed may not necessarily reflect the optimal approach related to the dataset.
+:::
+
+# ![](photo.png)
+
+The largest worldwide polluter and one of the main sources of carbon emissions is the energy sector. When the United Nations introduced the Sustainable Development Goals, they emphasized gender equality and the connection between women's problems and the climate disaster. However, in the past 10 years, there has been relatively little focus on climate mitigation efforts. Consequently, the primary issues raised by this study are the energy industry, and women and climate change. The impact of women's leadership on carbon disclosure among the top 100 global energy leaders between 2018 and 2020 was investigated in this study.
+
+Dataset in this article contains solid information on the novel dataset of exceptional women directors (EWDs) and carbon information disclosures (CID) of global energy leading companies. The information provided is relevant to the study "The Effect of Women's Leadership on Carbon Disclosure by the Top 100 Global Energy Leaders" [\[1\]](https://www.mdpi.com/2071-1050/15/11/8491). For the purpose of examining the extent of EWDs and the level of CID, data from 97 companies was obtained through the use of a content analysis technique based on enhanced scoring indicators. The companies' websites or any related reports, such as sustainability, environmental, annual, or integrated reports, were consulted. The data was collected over a three-year period (2018--2020) for the global energy leading companies that were listed in the Thomson Reuters Database in 2017.
+
+All details about the data such as data collection, compilation and entry into files can be accessed under the name of the data article which is called "Dataset of exceptional women directors and carbon information disclosures of global energy companies" [\[2\]](https://www.sciencedirect.com/science/article/pii/S2352340923007357). According to the linked data article, the data includes 97 companies with 291 observations from Thomson Reuters listings. Purposive random sampling was used to choose the companies for the sample based on the data collected. 
+
+R programming is used in all analysis parts of this study, and the document is created using Quarto[\[3\]](https://quarto.org).
+
+## 1.Data Descriptions
+
+| *File Name*                          | Name of the data in article | File description                                                                         |
+|--------------------------------------|-----------------------------|------------------------------------------------------------------------------------------|
+| CID Score (Table A).xlsx             | Table A                     | Binary and total CID scores for each company                                             |
+| WDs Engagement (Table B).xlsx        | Table B                     | Percentage of WDs' engagement based on their classifications and percentage on the board |
+| EWDs Aggregated Score (Table C).xlsx | Table C                     | WDs engagement scores marked by aggregated score among the four dimensions of EWDs.      |
+
+The datasets is consist of three different files. The first one is CD Score which is called the Table A basically shows the CID scores, It includes ratings based on some criteria and gives a total CID score for each year. Table B shows the women directors engagement based on the some classifications. All data in the Table B saved as percentages. Lastly, Table C show us the EWDs engagement scores and also gives the director names for each company. In the later steps, the new column will be added in the Table C.
+
+Moreover, each file also consists of three different sheets called 2018,2019,2020. all data were recorded for these 3 years.
+
+To make the schema more memorable, you can look at the data schema visual below:
+
+![](schema.JPG)
+
+Since the data was published in October 2023, no detailed study has been done on the data yet. According to the author this data set can be used to create a more sustainable future, the data is helpful for researchers examining women's participation in net-zero emissions, gender equality, climate resilience, renewable energy, and energy transition in corporate boardrooms (Majid et all., 2023). For this purpose, some important analyzes were applied to better understand the data and draw meaningful conclusions from the data.
+
+## 2.Reading and Cleaning the Data
+
+The following libraries were used in this study to make the necessary arrangements.
+
+### 2.1 Necessary Libraries
+
+```{r,message=F,warning=FALSE}
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(jmv)
+library(leaflet)
+library(plotrix)
+library(httr)
+library(rvest)
+library(sqldf)
+```
+
+readxl() is used for reading Excel files into R [\[4\]](https://readxl.tidyverse.org). Part of the tidyverse, dplyr() is a powerful package for data manipulation [\[5\]](https://dplyr.tidyverse.org). ggplot2() is a popular package for creating static, interactive, and dynamic visualizations in R [\[6\]](https://ggplot2.tidyverse.org). plotly() enables the creation of interactive plots and dashboards [\[7\]](https://plotly.com/r/). jmv() is used for statistical analysis and modelling [\[8\]](https://cran.r-project.org/web/packages/jmv/index.html). leaflet() is a library that creating a interactive maps [\[9\]](https://cran.r-project.org/web/packages/leaflet/index.html). plotrix() is used for creating specialized plots and adding features to existing plots [\[10\]](https://cran.r-project.org/web/packages/plotrix/index.html). httr() is a package for working http requests, and also making it easier to interact with APIs [\[11\]](https://httr.r-lib.org). rvest() is a web scrapping package in R, used for extracting data from HTML web pages [\[12\]](https://rvest.tidyverse.org). Lastly, sgldf() allows to perform SQL - like operations on R data frames [\[13\]](https://www.rdocumentation.org/packages/sqldf/versions/0.4-11).
+
+### 2.2 Downloading and Reading the Data
+
+Firstly, local file name is set for the zip file, and download it. As you can see from the link, the data stored in Amazon Web Services. Here you can find the data [\[14\]](https://data.mendeley.com/datasets/d2s9yz65mm/4). Contents are extracted, and defined the names of specific excel files. These files likely contain different datasets related to the project. File names with excel extensions were created for these three different files as CID Scores, WDs Engagement and EWDs Aggregated Score.
+
+```{r,message=F,warning=F}
+#defining working directory
+#setwd("/Users/mehmeterkan/Desktop")
+setwd("/Users/mehmeterkan/Desktop/project/Stat570FinalProject")
+#defining the link for the data
+zipF <- "https://prod-dcd-datasets-cache-zipfiles.s3.eu-west-1.amazonaws.com/d2s9yz65mm-4.zip"
+#set out the local file name for the zip file
+local_zip_filename <- "Dataset of Women Directors Engagement.zip"
+#downloading the data
+download.file(zipF, local_zip_filename, mode = "wb", method = "auto")
+#unzip the file
+unzip(local_zip_filename)
+#defining the name of the excel files
+excel_files <- c("CID Scores (Table A).xlsx", "WDs Engagement (Table B).xlsx", "EWDs Aggregated Score (Table C).xlsx")
+```
+
+#### CID Scores (Table A)
+
+This excel file includes information about binary and total CID scores of the companies between the years 2018 and 2020. The nine categories and ninety indicators of carbon disclosure procedures are included in Table 1 as a stand-in for CD practices for the sample firms. By assigning a score of 1 for "disclose" and a score of 0 for "not disclose" to each indication, the scoring approach evaluated the degree of CD among the energy leaders. This resulted in scores for each firm as well as an assessment using the content analysis technique. The highest score that may be obtained is 90. At the conclusion of the scoring methodology procedure, the amount of points for exposing any indications in the CD index will be divided.
+
+![View of data in excel](CID.png){width="1035"}
+
+```{r,message=F,warning=F}
+#defining working directory as the file name
+setwd("/Users/mehmeterkan/Desktop/project/Stat570FinalProject/Dataset of Women Directors’ Engagement and Carbon Information Disclosures of Global Energy Companies")
+#reading each sheet in the excel file
+CID_2018 <- read_excel("CID Scores (Table A).xlsx", sheet = "FYE 2018")
+CID_2019 <- read_excel("CID Scores (Table A).xlsx", sheet = "FYE 2019")
+CID_2020 <- read_excel("CID Scores (Table A).xlsx", sheet = "FYE 2020")
+```
+
+![View of the data in R](notcleanTableA.png)
+
+After the reading sheets, r reads titles as a rows and these column names were deleted. Moreover, there are no column names in the file so that we assigned column names for the tables. For that, instead of the giving column names for each sheets separately, a function that assign all common columns for each sheets was created. So, tabout he merging phase of these 3 different sheets, we try to first merge them as a column, but the number of columns has increased a lot, so that new columns was created for each sheets -year column- and combined data(all sheets) by rows with the rbind() in a file, instead of combining columns based. Lastly, the total CID scores of the companies are out of 90 and a different results were obtained for each year so that we combined the newly created year variable with existing total CID scores.
+
+In the end, except the company names and year variables, we changed the all variables into numeric.
+
+```{r,message=F,warning=F}
+#deleting unnecessary rows
+CID_2018 <- CID_2018[-c(1,2),]
+CID_2019 <- CID_2019[-c(1,2),]
+CID_2020 <- CID_2020[-c(1,2),]
+
+#setting common column names
+set_column_names <- function(data, year) {
+  colnames(data) <- c("company_name", "strategy_policy", "climate_change_opportunities",
+                      "corporate_ghg_emissions_targets", "company_wide_carbon_footprint",
+                      "ghg_emissions_change_over_time", "energy_related_reporting",
+                      "emission_reduction_initiatives_implementation",
+                      "carbon_emission_accountability", "quality_of_disclosure",
+                      paste0("quality_of_DisclosureTotal_cid_scores"),"year")
+  
+  data$year <- year
+  
+  return(data)
+}
+
+CID_2018 <- set_column_names(CID_2018,"2018")
+CID_2019 <- set_column_names(CID_2019,"2019")
+CID_2020 <- set_column_names(CID_2020,"2020")
+
+#combining all the tables into one table
+CID_scores <- rbind(CID_2018, CID_2019,CID_2020)
+#converting variables to numeric
+CID_scores <- CID_scores %>%
+  mutate_at(vars(-company_name, -year), as.numeric)
+```
+
+![View of the data in R after cleaning operations](images/Ekran%20Resmi%202024-01-10%2012.31.39.png)
+
+#### WDs Engagement (Table B)
+
+This file contains information about women board members classiﬁcation between 2018 and 2020. There are four different predictors in the dataset. (1) The percentage of women board members; (2) The percentage of women board members who are industry experts (3) The percentage of women board members who act as advisors (ADV); (4) The percentage of women board member who are community leaders(CL) among the board members for each company.
+
+![View of the data in excel](TableB.png)
+
+All sheets are read. Like a first dataset, titles seems as rows and column names does not seems well.
+
+```{r,message=F,warning=F}
+#defining working directory as the file name
+setwd("/Users/mehmeterkan/Desktop/project/Stat570FinalProject/Dataset of Women Directors’ Engagement and Carbon Information Disclosures of Global Energy Companies")
+#reading each sheet one by one
+WDs_2018 <- read_xlsx("WDs Engagement (Table B).xlsx", sheet = "FYE 2018")
+WDs_2019 <- read_xlsx("WDs Engagement (Table B).xlsx", sheet = "FYE 2019")
+WDs_2020 <- read_xlsx("WDs Engagement (Table B).xlsx", sheet = "FYE 2020")
+```
+
+![View of the data in R](TableBinR.png)
+
+First rows of the dataset was deleted, and applied a function to change all column names. Moreover, for combining all sheets, new year variables were created and added to data set. All sheets were combined by rows. As you can seen from the R view, as a mention before the data in this file consists of a percentage, when read them, the decimal numbers were too much. To change this, a function was applied. Firstly, with the mutate_at() functions, company_name and year variables were removed since these variables are categorical variables in a way. Thus, percentage sign was removed with sub() function, and all these values convert into numeric with the as.numeric functions and then round function applied to get two decimals.
+
+```{r,message=F,warning=F}
+#deleting uncesessary rows
+WDs_2018 <- WDs_2018[-1,]
+WDs_2019 <- WDs_2019[-1,]
+WDs_2020 <- WDs_2020[-1,]
+
+#setting common column names
+set_column_names_2 <- function(data, year) {
+  colnames(data) <- c("company_name", "number_of_wd", "per_of_wd_on_board", 
+                      "per_of_wd_industry_expert", 
+                      "per_of_wd_advisors","per_of_wd_community_leader")
+  
+  data$year <- year
+  
+  return(data)
+}
+
+WDs_2018 <- set_column_names_2(WDs_2018,"2018")
+WDs_2019 <- set_column_names_2(WDs_2019,"2019")
+WDs_2020 <- set_column_names_2(WDs_2020,"2020")
+
+#combining all the tables in one table
+WDs_engagement <- rbind(WDs_2018, WDs_2019, WDs_2020)
+
+#converting columns to numeric (excluding company_name,year)
+WDs_engagement <- WDs_engagement |> 
+  mutate_at(vars(-company_name,-year), function(x) round(as.numeric(sub("%", "", x)), 2))
+```
+
+![View of the data in R after cleaning operations](aftercleaningtable%20B.png)
+
+#### EWDs Aggregated Scores (Table C)
+
+The file has the information about EWD's engagement scores are indicated by the total score across the four different EWD parameters. Compare to the other files, the file also have women director names. There are different binary variables about the director positions that whether the director is expert, advisor or leaders. Moreover, there is a variable about the director years experience as well.
+
+![View of the data in excel](tableC.png)
+
+All sheets are read one by one.
+
+```{r,message=F,warning=F}
+#defining working directory as the file name
+setwd("/Users/mehmeterkan/Desktop/project/Stat570FinalProject/Dataset of Women Directors’ Engagement and Carbon Information Disclosures of Global Energy Companies")
+#reading each sheet in the excel file
+EWDs_2018 <- read_xlsx("EWDs Aggregated Score (Table C).xlsx", sheet = "FYE 2018")
+EWDs_2019 <- read_xlsx("EWDs Aggregated Score (Table C).xlsx", sheet = "FYE 2019")
+EWDs_2020 <- read_xlsx("EWDs Aggregated Score (Table C).xlsx", sheet = "FYE 2020")
+```
+
+![View of the data in R](images/r%20visualization.png)
+
+In this dataset name of the columns are similar to name that we assigned. For the easy interpretation, different column names are set and year column are added to the file.
+
+As you can see there is a different issue in the dataset compare to before data. Some company names are empty so we assume the empty places are belong to the company above. When we read the file in R, it's obvious that R seems these value as NA. Thus, we should replace these empty places with the company names. Initially, we specifed the how many maximum number of space in a sheet and then it's known that sheet 2018 includes maximum four empty for a same company name, sheets 2019 includes 5, and sheets 2020 includes 6 maximum space respectively. To fill and the organize these column, for loops were applied to each different sheets. If a value in the company name column is NA, it replaces the NA value with the previous value in the same column by using lag() function. If value is not NA, it keeps the original value, otherwise, company name. After these procedure, our list file is also ready for the analysis.
+
+```{r,message=F,warning=F}
+#setting common column names
+set.column.names <- function(data,year) {
+  colnames(data) <- c("company_name", "code", "WDsName", "industry_expert", 
+                      "advisor", "community_leaders", "energy_experiments", "log_of_energy_experiment")
+  data$year <- year
+  
+  return(data)
+}
+EWDs_2018 <- set.column.names(EWDs_2018,"2018")
+EWDs_2019 <- set.column.names(EWDs_2019,"2019")
+EWDs_2020 <- set.column.names(EWDs_2020,"2020")
+
+#replacing name in empty space
+for (i in 1:4) {EWDs_2018 <- EWDs_2018 |> 
+  mutate('company_name' = ifelse(is.na(company_name), lag(company_name), company_name))}
+for (i in 1:5) {EWDs_2019 <- EWDs_2019 |> 
+  mutate('company_name' = ifelse(is.na(company_name), lag(company_name), company_name))}
+for (i in 1:6) {EWDs_2020 <- EWDs_2020 |> 
+  mutate('company_name' = ifelse(is.na(company_name), lag(company_name), company_name))}
+
+#combining all the tables into one table
+EWDs_scores <- rbind(EWDs_2018,EWDs_2019,EWDs_2020)
+```
+
+After that, a categorical variable was added to the data set by generating new variables from data manipulation techniques. It would be a nice way to add titles to managers' years of energy experience. As a result, we divided the years that managers worked into some classes. We classified managers who had no experience or did not work in the energy sector as "no experience" because they did not have any experience in this field. We evaluated directors with working years up to 15 years as assistant director, those with 15 to 30 years of experience as director, and those with more than 30 years as senior director. We combined this classification under the wd_director column.
+
+```{r,message=F,warning=F}
+#converting energy_experiments variable into numeric
+EWDs_scores$energy_experiments <- as.numeric(EWDs_scores$energy_experiments)
+#adding new column as wd_title accoring to the energy_experiments
+EWDs_scores <- EWDs_scores |> 
+   mutate(wd_title = cut(energy_experiments, breaks = c(-Inf, 0 ,15, 30, 49),                         labels = c("No Experience","Assistant Director", "Director","Senior Director"), include.lowest = TRUE))
+```
+
+![View of the data after cleaning in R](ewd_Scores.png){width="926"}
+
+## 3. Descriptive Statistics
+
+#### CID Scores Table
+
+```{r}
+sm_CID_scores <- CID_scores |> select(-company_name,-year)
+summary(sm_CID_scores)
+```
+
+The collection offers insightful information about how businesses are adapting to climate change, especially when it comes to sustainability efforts and greenhouse gas (GHG) emissions. Interestingly, the average carbon footprint of corporations is 6.485, which highlights the necessity for coordinated efforts in emission mitigation. These footprints vary but are often large. The various GHG emissions objectives, which average 4.845 and show a good trend toward accepting and resolving environmental obligations, demonstrate a commitment to reduction. Moreover, positive trends in the execution of emission reduction programs are evident, as businesses regularly disclose their energy-related operations (average score of 8.351). Strong disclosure quality (average of 10.48) and high accountability scores (average of 5.763) highlight businesses' accountability for monitoring and openly disclosing carbon emissions. With varied but typically excellent achievements in lowering carbon footprints and adopting transparent reporting procedures, the dataset indicates an overall positive trajectory, demonstrating business commitment to sustainability and climate action.
+
+#### WDs Engagement Table
+
+```{r}
+sm_WDs_engagement <- WDs_engagement |> select(-company_name,-year)
+summary(sm_WDs_engagement)
+```
+
+The dataset provides information on the distribution of women directors (WD) on corporate boards. It shows that there are, on average, 2.76 WD per board, ranging from 0 to 8. The average proportion of female directors is 23.77%, indicating a range in gender representations across quartiles. The range of female directors is 0% to 60%. Furthermore, around 20.54% of female directors contribute their professional experience to the boards, highlighting the significance of fusing specialized knowledge with gender diversity. In addition, data shows that roughly 20.3% of female directors work as advisors, demonstrating their ability to impact strategic choices. With an average percentage of 13.19%, the dataset further emphasizes the importance of female directors as community leaders. All things considered, these results paint a complex picture of gender diversity on boards, including differences in the quantity, level of experience, advising capacities, and leadership positions in the community held by women directors.
+
+#### EWDs Scores Table
+
+```{r}
+sm_EWDs_scores <-EWDs_scores |> select(energy_experiments,log_of_energy_experiment,wd_title)
+summary(sm_EWDs_scores)
+```
+
+The dataset, which has a mean of 9.435 and ranges from 0 to 49, shows a variety of energy experimentation. In order to provide a compact representation, log-transformed values offer a normalized view (0.0000 to 3.8918, mean log of 1.7824). The most common titles are "Assistant Director," "Director," and "Senior Director," with 73 of them having the designation "No Experience." Nonetheless, the dataset's 25 missing values in the energy experiments and 98 missing log-transformed values, respectively, highlight how important completeness is. The depth of the information resides in its ability to capture a range of responsibilities and expertise levels; hence, more analysis is necessary to identify any potential relationships between professional titles and energy experiments.
+
+## 4. Analysis and Research Questions
+
+### 4.1 Research Question:
+
+#### **What are the companies with the highest average quality of disclosure total of CID scores of three years 2018,2019,2020?**
+
+```{r}
+#finding the mean cid_scores of three years for each company and slicing the highest ten
+mean_cid <- CID_scores %>%
+    filter(year %in% c("2018", "2019", "2020")) %>%
+    group_by(company_name) %>%
+    summarize(avg_cid_score = mean(quality_of_DisclosureTotal_cid_scores, na.rm = TRUE)) |> 
+  slice_max(order_by=avg_cid_score,n=10)
+mean_cid
+```
+
+```{r,warning=FALSE}
+plot_ly(data = mean_cid, x = ~company_name, y = ~avg_cid_score, type = 'bar', color = ~avg_cid_score) %>%
+  layout(title = "Top 10 Companies by Average Score",
+         xaxis = list(title = "Company Name", categoryorder = 'total descending'),
+         yaxis = list(title = "Average Score", range = c(75, 85)))
+
+```
+
+Top 10 companies by average CID scores for three years are Suncor Energy, Acea SpA, Hera, Fairmount Santrol, Encana, Formosa Petrochemical Corporation, Hellenic Petroleum, PKN ORLEN, Hess Corporation, and DCC. Compared to the other companies, company of Hera has the highest average CID score with 83.33. Then, it's followed by the company of Fairmount Santrol with 83 average CID score. In the top 10 company, the lowest average CID score is 78.67, and there are four company that has the same score. According to the article of Dataset of exceptional women directors and carbon information disclosures of global energy companies (Majid et al., 2023), all of ten companies are at the high CID ranking
+
+### 4.2 Research Question:
+
+#### How does the percentage of experience levels of women directors change between the years 2018 and 2020?
+
+```{r,warning=FALSE}
+library(ggplot2)
+ggplot(EWDs_scores, aes(x = wd_title, fill = factor(year))) +
+  geom_bar(position = position_dodge(width = 0.8), stat = "count", show.legend = TRUE, width = 0.7) +
+  labs(title = "Change of WD Titles Over Three Years",
+       x = "WD Title",
+       y = "Count") +
+  scale_fill_brewer(palette = "Set3") +  # Change the color palette
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels
+  geom_text(stat = "count", aes(label = ..count..), position = position_dodge(width = 0.8), vjust = -0.5)
+```
+
+Directors of companies have four titles according to their experienced year. These are director with no experience, assistant director, director, and senior director. According to the plot, companies have assistant director at most in three years by a wide margin. Percentage of these directors, increased in 2020 from 66% to 74% compared to 2019. As percentage of assistant director increased, percentage of women directors with no experience decreased over three years. This is the biggest decrease, from 12% to 3% compared to change of other titles
+
+### 4.3 Research Question:
+
+#### Does the CID score decrease on the average as the number of female directors increases?
+
+```{r}
+CID_by_year <- CID_scores |> 
+  group_by(year) |> 
+  summarize(
+    avg_company_wide_carbon_footprint = mean(company_wide_carbon_footprint),
+    avg_ghg_emissions_change_over_time = mean(ghg_emissions_change_over_time),
+    avg_emission_reduction_initiatives_implementation = mean(emission_reduction_initiatives_implementation),
+    avg_carbon_emission_accountability = mean(carbon_emission_accountability),
+    avg_quality_of_disclosure = mean(quality_of_disclosure),
+    avg_quality_of_DisclosureTotal_cid_scores = mean(quality_of_DisclosureTotal_cid_scores))
+```
+
+This code group the CID_scores data frame by year and calculate the average of each column for each year. The resulting data frame will have one row for each year and columns for each of the calculated averages.
+
+```{r}
+avg_numberwd <- WDs_engagement |> 
+  group_by(year) |> 
+  summarize(
+    avg_number_of_wd = mean(number_of_wd))
+
+fig <- plot_ly(data = CID_by_year,x = ~year,
+                      y = ~log(avg_quality_of_DisclosureTotal_cid_scores), name = "Quality of Disclosure Total CID Scores",
+                      type = "scatter",mode = "lines") |> 
+  add_trace(y = ~avg_numberwd$avg_number_of_wd, name = "Average number of Women Directors")
+
+fig
+```
+
+Grouping the WDs_engagement data frame by year and calculate the average number of women directors for each year. The resulting data frame will have one row for each year and a column for the calculated average. In order to have a better visualization, I take the log of CID scores. The reason is that since the range between these two columns are high, we could not clearly see the increases or decreases in the graph. In the plot, it looks like as the number of WD increases, quality of disclosure Total CID scores tend to decrease. However, since we do not have a enough observations in year basis, and we did not apply a statistical tests, this result is not trustable.
+
+### 4.4 Research Question:
+
+In the article, authors created to some hypothesis about the dataset. Here is the some hypothesis:
+
+1-Women board members who are industry experts will positively enhance carbon disclosure.
+
+2-Women board members who act as advisors will positively enhance carbon disclosure.
+
+3-Women board members who serve as community leaders will positively enhance carbon disclosure.
+
+Authors specifed that some assumptions may not be logical in sense, but we try to answer these assumptions whether they are true or not.
+
+For the test for all assumptions, the code first calculates the average number of women directors for each year using the WDs_engagement data frame. Then, it creates a plot using plot_ly function from the plotly package. The plot has the year on the x-axis and the logarithm of the average quality of disclosure total CID scores on the y-axis. The plot also has three lines representing the average number of women industry experts, community leaders, and advisors respectively. In short, the plot shows the relationship between the Quality of Disclosure Total CID Scores and the Average number of Women Industry Experts, Average number of Women Community Leader, and Average number of Women Advisors.
+
+```{r}
+avg_numberwd <- WDs_engagement |> 
+  group_by(year) |> 
+  summarize(
+    avg_number_of_wd = mean(number_of_wd),
+    avg_industry_expert = mean(per_of_wd_industry_expert),
+    avg_com_leader = mean(per_of_wd_community_leader),
+    avg_wd_advisors = mean(per_of_wd_advisors))
+
+fig2 <- plotly::plot_ly(data = CID_by_year,x = ~year,
+                        y = ~log(avg_quality_of_DisclosureTotal_cid_scores), name = "Quality of Disclosure Total CID Scores",
+                        type = "scatter",mode = "lines") |> 
+  add_trace(y = ~avg_numberwd$avg_industry_expert*10, name = "Average number of Women Industry Experts") |> 
+  add_trace(y = ~avg_numberwd$avg_com_leader*10, name = "Average number of Women Community Leader") |> 
+  add_trace(y = ~avg_numberwd$avg_wd_advisors*10, name = "Average number of Women Advisors")
+fig2
+```
+
+Since the range of the values we are interested in in the WD dataset is between 0 and 1 and the range of the CID score is between 0 and 80, it would be difficult to see the breaks in the plot when we print the plot. For this reason, we took the log value of the CID score and multiplied the odds in the WD dataset by 10 for better plot awareness. It does not look like there exists a meaningful relationship between the total CID scores and the other variables.
+
+### 4.5 Research Question:
+
+#### How are energy companies distributed on the map by country and continent?
+
+It is investigated the distribution of companies around the world both in continental basis and country basis. To do so, firstly, data should be pulled by applying web scraping. Previously, we had company data with longitude and latitude information for the continents.
+
+```{r}
+url_ulke <- "https://developers.google.com/public-data/docs/canonical/countries_csv?hl=en"
+```
+
+In the website of google designed for developers, there are available data sets. In one of them, we pulled a dataset which includes the country name, longitude and latitude of the countries.
+
+```{r}
+res <- GET(url_ulke)
+html_con <- content(res, "text")
+html_ulke <- read_html(html_con)
+```
+
+First, we define the url of the dataset. Then, by read_html function, we read the url in R. However, data is still not readable in r. It ıs in xml_document xml_node class.
+
+```{r}
+tables <- html_ulke |> 
+  html_nodes("table") |> 
+  html_table() # Extract all tables from the webpage
+```
+
+By html_nodes() function, it is selected all the HTML table elements in the document. Then, html_table() converts the selected HTML tables into data frames.
+
+```{r}
+long_lat_country <- tables[[1]]
+long_lat_country <- long_lat_country[,-1]
+colnames(long_lat_country)[3] <- "Country"
+```
+
+![new data set after scraping](afterscraping.png){width="357"}
+
+Then, we assigned the first table extracted from the HTML document to the variable long_lat_country. The table includes information about the latitude and longitude of different countries, code and name of the countries. We dropped the country code variable, and edit the column names of the country name.
+
+Moreover, we take the company names, continents and country where the company is located from appendix part in the article. [\[15\]](https://www.researchgate.net/publication/370995621_The_Effect_of_Women%27s_Leadership_on_Carbon_Disclosure_by_the_Top_100_Global_Energy_Leaders#pff)
+
+```{r}
+company_2 <- read.csv('company_2.csv', sep = ";",header = T)
+```
+
+![data from the article](company_2.png){width="362"}
+
+Lastly, we combined two data by same column called "Country" . One of the them is web scrapping data, another is the data was taken in the article( company). Now, In addition to its company names, it also includes country, continent and geographical location information. In order to have all the information in company dataset, we used all.x=TRUE function.
+
+```{r}
+combined_data <- merge(x = company_2, y = long_lat_country, by = "Country", all.x = TRUE) 
+```
+
+```{r}
+df <- sqldf::sqldf("SELECT Country, continent, latitude, longitude, COUNT(*) AS Freq 
+             FROM combined_data
+             GROUP BY Country
+                   ORDER BY Freq DESC")
+df_last <- (sqldf::sqldf("SELECT Freq,A.* FROM df B LEFT JOIN combined_data A ON A.latitude=B.latitude"))
+```
+
+To investigate the distribution of companies all around the world, we group them by country. By doing so, we can easily see how many companies there are for each continent. For the better understanding of the data, we order the data by its frequency.
+
+```{r}
+center_lon <- median(df$longitude, na.rm = TRUE)
+center_lat <- median(df$lattitude, na.rm = TRUE)
+library(leaflet)
+
+getColor <- function(df) {
+  sapply(df$Freq, function(mag) {
+    if(mag <= 2) {
+      "green"
+    } else if(mag <= 4) {
+      "orange"
+    } else {
+      "red"
+    } })
+}
+icons <- awesomeIcons(
+  icon = 'ios-close',
+  iconColor = 'black',
+  library = 'ion',
+  markerColor = getColor(df)
+)
+```
+
+The median values of longitude and latitude are calculated in order to arrange the zoom of the map. However, we did not use this because the distances between the continents were too far. In the map, We defined this function to visually see how the number of companies varies from country to country. The cut off values are determined by its quarters.
+
+```{r}
+str(df)
+leaflet() |> 
+  addProviderTiles(providers$Esri,
+                   options = providerTileOptions(noWrap = TRUE)) |> 
+  addAwesomeMarkers(
+    data = df_last,
+    lng = ~longitude,
+    lat = ~latitude,
+    label = ~Country,
+    icon = icons,
+    popup = ~paste("<br>Number of Company:", Freq,
+                   "<br>Company Names:", company_name),
+    clusterOptions = markerClusterOptions()
+) 
+```
+
+leaflet() functions initializes a new Leaflet map. addProviderTiles() adds a tile layer from a known map provider. addAwesomeMarkers() adds markers to the map. The markers are created using data from the df_son data frame. Lng and lat specify the longitude and latitude columns in the data frame. Label specifies the label column in the data frame. Icon specifies the icon for the markers. Popup specifies the HTML content for the popups that appear when a marker is clicked. clusterOptions specifies the options for clustering the markers.
+
+## 5.Conclusion:
+
+This project examines the relationship between women's leadership and carbon disclosure in the top 100 global energy companies from 2018 to 2020. The study focuses on the energy sector's role as a major polluter and explores the intersection of gender equality, women's issues, and climate change, aligned with Sustainable Development Goals. The dataset, collected over three years from content analysis of reports from 97 companies, aims to evaluate the influence of women's leadership on carbon disclosure in these energy companies. R programming is used for analysis, and the results are presented using Quarto. The dataset comprises three files: CD Scores (carbon disclosure), WDs Engagement (women directors' classification), and EWDs Aggregated Scores. The article outlines the process of reading and cleaning each file, addressing challenges like empty company names. It highlights the significance of the data for potential research on gender equality, climate mitigation, and the role of women in the energy sector, emphasizing the use of various R packages for data manipulation and analysis. Overall, the projects provides a comprehensive overview of the research's methodology and the importance of the dataset in addressing crucial issues in the energy industry. We generate some research questions. In order to answer these questions, we pull dataset from the website. Also, we made some operations within the data and create new variables, sub-datasets. To answer these questions visually, we used plotly, leaflet and ggplot frequently. Moreover, we try to give answer some hypothesis by author and can't find any meaningful results for the hypothesis. The projects is one of the leading project for this dataset, The project is open to any feedback, comments and developments.
+
+## 6. References:
+
+\[1\] Abd Majid, Nurshahirah, and Amar Hisham Jaaffar. "The Effect of Women's Leadership on Carbon Disclosure by the Top 100 Global Energy Leaders." *MDPI*, Multidisciplinary Digital Publishing Institute, 23 May 2023, www.mdpi.com/2071-1050/15/11/8491. 
+
+\[2\] Nurshahirah Abd Majid a, et al. "Dataset of Exceptional Women Directors and Carbon Information Disclosures of Global Energy Companies." *Data in Brief*, Elsevier, 5 Oct. 2023, www.sciencedirect.com/science/article/pii/S2352340923007357. 
+
+\[3\] *Quarto*, quarto.org/.
+
+\[4\] Wickham H, Bryan J (2023). *readxl: Read Excel Files*. https://readxl.tidyverse.org, https://github.com/tidyverse/readxl.
+
+\[5\] Wickham H, François R, Henry L, Müller K, Vaughan D (2023). *dplyr: A Grammar of Data Manipulation*. R package version 1.1.4, https://github.com/tidyverse/dplyr, [https://dplyr.tidyverse.org](https://dplyr.tidyverse.org/).
+
+\[6\] H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
+
+\[7\] "Plotly." *Plotly r Graphing Library in R*, plotly.com/r/.
+
+\[8\] "The 'jamovi' Analyses \[R Package Jmv Version 2.4.11\]." *The Comprehensive R Archive Network*, Comprehensive R Archive Network (CRAN), 12 Oct. 2023, cran.r-project.org/web/packages/jmv/index.html. 
+
+\[9\] "Create Interactive Web Maps with the JavaScript 'leaflet' Library \[R Package Leaflet Version 2.2.1\]." *The Comprehensive R Archive Network*, Comprehensive R Archive Network (CRAN), 13 Nov. 2023, cran.r-project.org/web/packages/leaflet/index.html. 
+
+\[10\] "Package Plotrix." *CRAN*, Comprehensive R Archive Network (CRAN), cran.r-project.org/web/packages/plotrix/index.html.
+
+\[11\] Wickham H (2023). *httr: Tools for Working with URLs and HTTP*. https://httr.r-lib.org/, https://github.com/r-lib/httr.
+
+\[12\] Wickham H (2023). *rvest: Easily Harvest (Scrape) Web Pages*. https://rvest.tidyverse.org/, https://github.com/tidyverse/rvest.
+
+\[13\] Grothendieck G (2017). *sqldf: Manipulate R Data Frames Using SQL*. R package version 0.4-11, <https://CRAN.R-project.org/package=sqldf>.
+
+\[14\] abd majid, nurshahirah (2023), "Dataset of Women Directors' Engagement and Carbon Information Disclosures of Global Energy Companies", Mendeley Data, V4, doi: 10.17632/d2s9yz65mm.4
+
+\[15\] TY - JOUR AU - Abd Majid, Nurshahirah AU - Jaafar, Amar PY - 2023/05/23 SP - 8491 T1 - The Effect of Women's Leadership on Carbon Disclosure by the Top 100 Global Energy Leaders VL - 15 DO - 10.3390/su15118491 JO - Sustainability ER -
